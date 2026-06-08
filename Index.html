@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMONJAB - Sistem Monitoring Jabatan</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --gov-blue: #0F172A;
+            --gov-blue-light: #1E293B;
+            --gov-accent: #2563EB;
+            --gov-bg: #F8FAFC;
+            --gov-border: #E2E8F0;
+            --text-main: #334155;
+            --text-muted: #64748B;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--gov-bg); color: var(--text-main); font-size: 0.95rem; }
+        
+        /* Layout */
+        #wrapper { overflow-x: hidden; }
+        #sidebar-wrapper { min-height: 100vh; background-color: #FFFFFF; width: 260px; transition: margin .25s ease-out; border-right: 1px solid var(--gov-border); z-index: 1000;}
+        #page-content-wrapper { min-width: 100vw; }
+        @media (min-width: 768px) { #sidebar-wrapper { margin-left: 0; } #page-content-wrapper { min-width: 0; width: 100%; } }
+        
+        /* Sidebar Styling */
+        .sidebar-heading { padding: 1.5rem; border-bottom: 1px solid var(--gov-border); }
+        .list-group-item { border: none; padding: 0.75rem 1.5rem; margin: 2px 10px; border-radius: 8px; color: var(--text-muted); font-weight: 500; font-size: 0.9rem; transition: all 0.2s;}
+        .list-group-item i { font-size: 1.1rem; color: #94A3B8; transition: all 0.2s;}
+        .list-group-item:hover { background-color: var(--gov-bg); color: var(--gov-blue); }
+        .list-group-item.active { background-color: #EFF6FF; color: var(--gov-accent); font-weight: 600;}
+        .list-group-item.active i { color: var(--gov-accent); }
+
+        /* Topbar & Cards */
+        .navbar { background-color: #FFFFFF !important; border-bottom: 1px solid var(--gov-border) !important; padding: 1rem 1.5rem !important; }
+        .card { border: 1px solid var(--gov-border); border-radius: 12px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); background-color: #FFFFFF; }
+        .card-header { background-color: transparent; border-bottom: 1px solid var(--gov-border); padding: 1.25rem 1.5rem; border-radius: 12px 12px 0 0 !important; }
+        
+        /* Stats Widget */
+        .stat-card { display: flex; align-items: center; padding: 1.5rem; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .stat-info { margin-left: 1rem; }
+        
+        /* Tables */
+        .table thead th { background-color: var(--gov-bg); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gov-border); padding: 1rem; font-weight: 600;}
+        .table tbody td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid var(--gov-border); }
+        
+        /* Utilities */
+        .badge { padding: 0.4em 0.8em; font-weight: 600; border-radius: 6px; font-size: 0.75rem;}
+        .bg-soft-success { background-color: #D1FAE5; color: #065F46; }
+        .bg-soft-warning { background-color: #FEF3C7; color: #92400E; }
+        .bg-soft-danger { background-color: #FEE2E2; color: #991B1B; }
+        .bg-soft-primary { background-color: #EFF6FF; color: #1E40AF; }
+        
+        .page-section { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Tree View */
+        .tree-unit { border-left: 3px solid var(--gov-border); margin-bottom: 1rem; }
+        .toggle-icon { transition: transform 0.2s; font-size: 0.8rem; }
+        [aria-expanded="true"] .toggle-icon { transform: rotate(90deg); }
+
+        /* Global Search */
+        #global-search { background-color: var(--gov-bg); border: 1px solid var(--gov-border); border-radius: 50px; padding: 0.5rem 1.25rem; font-size: 0.9rem; width: 300px; outline: none; transition: width 0.3s;}
+        #global-search:focus { width: 400px; border-color: var(--gov-accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);}
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading text-center">
+                <img src="https://banyuwangikab.go.id/presentation/b-asset/img/logo_bwi_small.png" alt="Logo" style="height: 50px;" class="mb-2"><br>
+                <span class="fs-5 fw-bold" style="letter-spacing: -0.5px; color: var(--gov-blue);">SIMON<span style="color: var(--gov-accent);">JAB</span></span>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <small class="text-uppercase fw-bold text-muted ms-4 mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">Menu Utama</small>
+                <a href="#" class="list-group-item list-group-item-action active nav-btn" data-target="dashboard"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="executive"><i class="bi bi-pie-chart"></i> Rekap Jabatan</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="masajabatan"><i class="bi bi-hourglass-split"></i> Masa Jabatan</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="struktur"><i class="bi bi-diagram-3"></i> Struktur Jabatan</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="plt"><i class="bi bi-person-badge"></i> Penugasan Plt/Plh</a>
+                
+                <small class="text-uppercase fw-bold text-muted ms-4 mt-4 mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">Manajemen Data</small>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="jabatan"><i class="bi bi-briefcase"></i> Master Jabatan</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="pejabat"><i class="bi bi-people"></i> Data Pejabat</a>
+                <a href="#" class="list-group-item list-group-item-action nav-btn" data-target="mutasi"><i class="bi bi-arrow-left-right"></i> Update Mutasi</a>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand-lg">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-light border-0 d-md-none me-3" id="menu-toggle"><i class="bi bi-list fs-4"></i></button>
+                    <h4 class="m-0 fw-bold text-dark" id="page-title" style="letter-spacing: -0.5px;">Dashboard</h4>
+                </div>
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="position-relative me-4 d-none d-lg-block">
+                        <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 15px;"></i>
+                        <input type="text" id="global-search" placeholder="Cari ASN / NIP / Jabatan (Enter)..." onkeypress="handleGlobalSearch(event)">
+                    </div>
+                    <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
+                        <i class="bi bi-calendar4-week text-primary me-2"></i>
+                        <span id="clock" class="fw-semibold text-dark small"></span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid px-4 py-4 position-relative" id="main-container">
+                <!-- Loader -->
+                <div id="loader" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                    <h6 class="text-muted fw-bold">Sedang Memuat Data...</h6>
+                </div>
+
+                <!-- SECTION: DASHBOARD -->
+                <div id="page-dashboard" class="page-section">
+                    <div class="row mb-4" id="dash-cards"></div>
+                    
+                    <div class="row">
+                        <!-- Chart Komposisi -->
+                        <div class="col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header"><h6 class="m-0 fw-bold">Komposisi Pengisian Jabatan</h6></div>
+                                <div class="card-body d-flex justify-content-center align-items-center"><canvas id="chartStatus"></canvas></div>
+                            </div>
+                        </div>
+                        <!-- Chart OPD Kosong -->
+                        <div class="col-lg-8 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header"><h6 class="m-0 fw-bold">Jabatan Kosong per Instansi (OPD)</h6></div>
+                                <div class="card-body"><canvas id="chartOpdKosong" height="120"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-12 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-soft-warning border-bottom-0 py-3">
+                                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Masa Jabatan Hampir Berakhir / Lebih dari 4 Tahun (Evaluasi Kinerja)</h6>
+                                </div>
+                                <div class="card-body p-0 table-responsive">
+                                    <table class="table table-hover mb-0 text-sm" id="tableDashWarning">
+                                        <thead><tr><th class="ps-4">NIP</th><th>Nama Pegawai</th><th>Jabatan Definitif</th><th>TMT</th><th>Durasi Saat Ini</th><th>Sisa Waktu (Sblm 5 Thn)</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: REKAP JABATAN -->
+                <div id="page-executive" class="page-section d-none">
+                    <div class="row">
+                        <!-- JABATAN KOSONG -->
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-soft-danger py-3 d-flex justify-content-between align-items-center border-bottom-0">
+                                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-briefcase text-danger me-2"></i>Rekap Jabatan Kosong</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="bg-light p-2 border-bottom border-top d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-funnel text-muted ms-2 me-2"></i>
+                                            <select id="filter-eselon-kosong" class="form-select form-select-sm w-auto border-0 shadow-sm" onchange="renderExecutive()">
+                                                <option value="">-- Semua Eselon --</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-white border shadow-sm py-1 px-3 me-1 text-primary fw-bold" onclick="showPreviewKosong()"><i class="bi bi-eye me-1"></i> Preview</button>
+                                            <button class="btn btn-sm btn-white border shadow-sm py-1 px-3 me-1 text-success fw-bold" onclick="downloadKosong()"><i class="bi bi-file-excel me-1"></i> Excel</button>
+                                            <button class="btn btn-sm btn-white border shadow-sm py-1 px-3 text-danger fw-bold" onclick="exportPDF('tableExecKosong', 'Rekap_Jabatan_Kosong')"><i class="bi bi-file-pdf me-1"></i> PDF</button>
+                                        </div>
+                                    </div>
+                                    <table class="table table-hover mb-0" id="tableExecKosong">
+                                        <thead><tr><th class="ps-4">Tingkat Eselon</th><th class="text-end pe-4">Jabatan Kosong</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RANGKAP JABATAN -->
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-soft-warning py-3 d-flex justify-content-between align-items-center border-bottom-0">
+                                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-lines-fill text-warning me-2"></i>ASN Rangkap Jabatan (Plt/Plh)</h6>
+                                    <button class="btn btn-sm btn-white border shadow-sm py-1 px-3 text-danger fw-bold" onclick="exportPDF('tableExecRangkap', 'Laporan_Rangkap_Jabatan')"><i class="bi bi-file-pdf me-1"></i> PDF</button>
+                                </div>
+                                <div class="card-body p-0 table-responsive" style="max-height: 400px;">
+                                    <table class="table table-hover mb-0" id="tableExecRangkap">
+                                        <thead><tr><th class="ps-4">Profil Pejabat</th><th>Daftar Jabatan Aktif</th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PROYEKSI PENSIUN -->
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-white">
+                            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-calendar-x text-primary me-2"></i>Proyeksi Pensiun Berdasarkan NIP</h6>
+                        </div>
+                        <div class="card-body p-0 table-responsive">
+                            <div class="p-3 bg-light border-bottom small text-muted">
+                                <i class="bi bi-info-circle me-1"></i> Sistem menghitung usia dari 8 digit awal NIP. BUP: 58 Tahun (Administrator/Pengawas/Pelaksana) dan 60 Tahun (JPT/Fungsional Madya).
+                            </div>
+                            <table class="table table-hover mb-0" id="tableExecPensiun">
+                                <thead><tr><th class="ps-4">NIP</th><th>Nama Lengkap</th><th>Jabatan Tertinggi</th><th>TMT Pensiun</th><th>Status</th><th>Aksi</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: MASA JABATAN -->
+                <div id="page-masajabatan" class="page-section d-none">
+                    <div class="card mb-4">
+                        <div class="card-header bg-white py-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                            <h6 class="m-0 fw-bold mb-3 mb-md-0">Monitoring Durasi Jabatan</h6>
+                            <div class="d-flex gap-2">
+                                <select id="filter-opd-masa" class="form-select form-select-sm w-auto bg-light"><option value="">Semua OPD</option></select>
+                                <select id="filter-eselon-masa" class="form-select form-select-sm w-auto bg-light"><option value="">Semua Eselon</option></select>
+                                <select id="filter-status-masa" class="form-select form-select-sm w-auto bg-light"><option value="">Semua Status</option><option value="Definitif">Definitif</option><option value="Plt">Plt</option><option value="Plh">Plh</option></select>
+                                <button class="btn btn-sm btn-success fw-bold" onclick="exportToExcel('dt-masa', 'Laporan_Masa_Jabatan')"><i class="bi bi-file-excel me-1"></i>Excel</button>
+                            </div>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-hover w-100" id="dt-masa">
+                                <thead><tr><th>NIP</th><th>Nama Lengkap</th><th>Jabatan Saat Ini</th><th>OPD</th><th>Eselon</th><th>Status</th><th>TMT</th><th>Durasi</th><th>Aksi</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: STRUKTUR JABATAN -->
+                <div id="page-struktur" class="page-section d-none">
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-3 d-flex justify-content-between align-items-center bg-light rounded">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary fw-bold bg-white" onclick="$('.tree-collapse').collapse('show')"><i class="bi bi-arrows-expand me-1"></i> Expand All</button>
+                                <button class="btn btn-sm btn-outline-secondary fw-bold bg-white" onclick="$('.tree-collapse').collapse('hide')"><i class="bi bi-arrows-collapse me-1"></i> Collapse All</button>
+                            </div>
+                            <div class="d-flex gap-2 w-50">
+                                <input type="text" id="search-tree" class="form-control form-control-sm" placeholder="Cari nama jabatan atau unit di struktur..." onkeyup="searchTree()">
+                                <button class="btn btn-sm btn-danger fw-bold" onclick="exportPDF('tree-container', 'Struktur_Organisasi_Visual', true)"><i class="bi bi-file-pdf me-1"></i> PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-0 bg-transparent shadow-none">
+                        <div class="card-body p-0" id="tree-container"></div>
+                    </div>
+                </div>
+
+                <!-- SECTION: PENUGASAN PLT/PLH -->
+                <div id="page-plt" class="page-section d-none">
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-soft-warning py-3 border-bottom-0">
+                            <h6 class="m-0 fw-bold text-dark">Formulir Penugasan Plt. / Plh. (Rangkap Jabatan)</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-muted mb-2">Cari Pegawai (ASN)</label>
+                                    <select id="select-pejabat-plt" class="form-select w-100"></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-muted mb-2">Cari Jabatan Kosong (Target Plt / Plh)</label>
+                                    <select id="select-jabatan-plt" class="form-select w-100"></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold text-muted mb-2">Jenis Penugasan</label>
+                                    <select id="select-status-plt" class="form-select border shadow-sm bg-light">
+                                        <option value="Plt">Pelaksana Tugas (Plt.)</option>
+                                        <option value="Plh">Pelaksana Harian (Plh.)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary fw-bold px-5 mt-3 shadow-sm" onclick="executePlt()"><i class="bi bi-check2-circle me-2"></i> Simpan Penugasan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: MASTER JABATAN -->
+                <div id="page-jabatan" class="page-section d-none">
+                    <div class="card mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h6 class="m-0 fw-bold text-dark">Data Master Jabatan Struktural</h6>
+                            <button class="btn btn-sm btn-primary shadow-sm" onclick="showModalJabatan()"><i class="bi bi-plus-lg me-1"></i> Tambah Jabatan</button>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-hover w-100" id="dt-jabatan">
+                                <thead><tr><th>ID</th><th>Nama Jabatan</th><th>Eselon</th><th>Unit Organisasi Induk</th><th>Kondisi</th><th>Aksi</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: DATA PEJABAT -->
+                <div id="page-pejabat" class="page-section d-none">
+                    <div class="card mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h6 class="m-0 fw-bold text-dark">Database Profil Pejabat / ASN</h6>
+                            <button class="btn btn-sm btn-primary shadow-sm" onclick="showModalPejabat()"><i class="bi bi-person-plus-fill me-1"></i> Tambah ASN Manual</button>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-hover w-100" id="dt-pejabat">
+                                <thead><tr><th>NIP</th><th>Nama Lengkap</th><th>Pangkat</th><th>Golongan</th><th>Aksi</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: UPDATE MUTASI -->
+                <div id="page-mutasi" class="page-section d-none">
+                    <div class="row">
+                        <!-- Mutasi Massal -->
+                        <div class="col-lg-7 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-soft-primary d-flex justify-content-between align-items-center py-3 border-bottom-0">
+                                    <h6 class="fw-bold text-primary m-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Update Data Mutasi Masal</h6>
+                                    <button class="btn btn-sm btn-primary fw-bold" onclick="downloadTemplateMutasi()"><i class="bi bi-download me-1"></i> Download Template & Ref ID</button>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small mb-4 lh-lg">Gunakan template Excel yang disediakan. Format kolom wajib: <code>NIP</code> dan <code>ID_JABATAN_BARU</code>. Jika NIP belum terdaftar di Data Pejabat, sistem akan otomatis mendaftarkannya.</p>
+                                    <div class="input-group mb-3 shadow-sm border rounded">
+                                        <input type="file" class="form-control border-0 bg-light" id="fileMutasi" accept=".xlsx, .xls">
+                                        <button class="btn btn-primary px-4 fw-bold" type="button" onclick="handlePreviewMutasi()">Validasi File</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mutasi Manual -->
+                        <div class="col-lg-5 mb-4">
+                            <div class="card h-100 bg-white shadow-sm border">
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold mb-3 text-dark border-bottom pb-2">Update Data Mutasi Perorangan</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-muted mb-2">Cari Pegawai Target</label>
+                                        <select id="select-pejabat-mutasi" class="form-select w-100"></select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label small fw-bold text-muted mb-2">Cari Jabatan Baru (Definitif)</label>
+                                        <select id="select-jabatan-mutasi" class="form-select w-100"></select>
+                                    </div>
+                                    <button class="btn btn-primary w-100 fw-bold shadow-sm" onclick="executeMutasiManual()"><i class="bi bi-arrow-left-right me-2"></i>Eksekusi Mutasi</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Mutasi -->
+                    <div id="previewMutasiContainer" class="d-none mt-2">
+                        <div class="card border-success shadow-sm">
+                            <div class="card-header bg-soft-success py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold text-success mb-0"><i class="bi bi-check-all me-2"></i>Preview Hasil Validasi Excel</h6>
+                                <button class="btn btn-success px-4 fw-bold shadow-sm" id="btnProsesMutasi" onclick="executeMutasi()"><i class="bi bi-lightning-charge me-1"></i> Terapkan Mutasi Massal</button>
+                            </div>
+                            <div class="card-body p-0 table-responsive">
+                                <table class="table table-hover text-sm mb-0" id="tablePreviewMutasi">
+                                    <thead class="table-light"><tr><th class="ps-4">NIP</th><th>Nama</th><th>Jabatan Lama Aktif</th><th>Jabatan Baru Diajukan</th><th>Status Validasi</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Jabatan Kosong -->
+    <div class="modal fade" id="modalPreviewKosong" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom px-4 py-3 bg-light">
+                    <h6 class="modal-title fw-bold text-dark"><i class="bi bi-search me-2"></i> Rincian Jabatan Kosong <span id="label-filter-kosong" class="text-danger"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover w-100" id="dt-preview-kosong">
+                            <thead class="table-light"><tr><th>ID Jabatan</th><th>Nama Jabatan</th><th>Eselon</th><th>Unit Kerja Organisasi</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Libraries -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- jsPDF untuk Export Laporan PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        let APP_DATA = null;
+        let chartInstanceEselon = null;
+        let chartInstanceStatus = null;
+        let chartInstanceOpd = null;
+        let preparedMutasiData = [];
+        let tableMasaJabatan = null;
+
+        const API_URL = "https://script.google.com/macros/s/AKfycbyzBWwFmI2fSmTPxMCQqcKui-s34vzsT1k6XDDrXLbpVR8cmCS8QAY1cC4sZwZ5N0at/exec";
+
+        // =======================================================
+        // DASHBOARD & REKAP
+        // =======================================================
+        function renderDashboard() {
+            let totalJab = APP_DATA.jabatan.length;
+            let actPen = APP_DATA.penempatan.filter(p => p.AKTIF === 'Ya');
+            let def = 0, plt = 0, plh = 0, filledJab = new Set();
+            
+            actPen.forEach(p => {
+                filledJab.add(p.JABATAN_ID);
+                if(p.STATUS_JABATAN === 'Definitif') def++;
+                if(p.STATUS_JABATAN === 'Plt') plt++;
+                if(p.STATUS_JABATAN === 'Plh') plh++;
+            });
+            let kosong = totalJab - filledJab.size;
+
+            $("#dash-cards").html(`
+                <div class="col-md-3 mb-3"><div class="stat-card card shadow-sm"><div class="stat-icon bg-soft-primary text-primary"><i class="bi bi-briefcase"></i></div><div class="stat-info"><p class="text-muted small fw-bold mb-0">TOTAL JABATAN</p><h4 class="fw-bolder m-0">${totalJab}</h4></div></div></div>
+                <div class="col-md-3 mb-3"><div class="stat-card card shadow-sm"><div class="stat-icon bg-soft-success text-success"><i class="bi bi-check2-circle"></i></div><div class="stat-info"><p class="text-muted small fw-bold mb-0">DEFINITIF</p><h4 class="fw-bolder m-0">${def}</h4></div></div></div>
+                <div class="col-md-3 mb-3"><div class="stat-card card shadow-sm"><div class="stat-icon bg-soft-warning text-warning"><i class="bi bi-person-lines-fill"></i></div><div class="stat-info"><p class="text-muted small fw-bold mb-0">PLT / PLH</p><h4 class="fw-bolder m-0">${plt+plh}</h4></div></div></div>
+                <div class="col-md-3 mb-3"><div class="stat-card card shadow-sm border-danger"><div class="stat-icon bg-soft-danger text-danger"><i class="bi bi-dash-circle"></i></div><div class="stat-info"><p class="text-danger small fw-bold mb-0">KOSONG</p><h4 class="fw-bolder m-0 text-danger">${kosong}</h4></div></div></div>
+            `);
+
+            // Sort Eselon Chart
+            let eselonMap = {};
+            APP_DATA.jabatan.forEach(j => { 
+                let es = (j.ESELON && j.ESELON !== '-') ? j.ESELON : 'Non Eselon';
+                eselonMap[es] = (eselonMap[es]||0) + 1; 
+            });
+            
+            let eselonOrder = ['I.A', 'I.B', 'II.A', 'II.B', 'III.A', 'III.B', 'IV.A', 'IV.B', 'V.A', 'V.B', 'Non Eselon'];
+            let sortedLabels = Object.keys(eselonMap).sort((a, b) => {
+                let idxA = eselonOrder.indexOf(a); let idxB = eselonOrder.indexOf(b);
+                if(idxA === -1) idxA = 99; if(idxB === -1) idxB = 99;
+                return idxA - idxB;
+            });
+            let sortedData = sortedLabels.map(l => eselonMap[l]);
+
+            if(chartInstanceEselon) chartInstanceEselon.destroy();
+            chartInstanceEselon = new Chart(document.getElementById('chartEselon'), { 
+                type: 'bar', data: { labels: sortedLabels, datasets: [{ data: sortedData, backgroundColor: '#2563EB', borderRadius: 4 }] }, 
+                options: { responsive: true, plugins: { legend: {display:false} } } 
+            });
+            
+            if(chartInstanceStatus) chartInstanceStatus.destroy();
+            chartInstanceStatus = new Chart(document.getElementById('chartStatus'), { 
+                type: 'doughnut', data: { labels: ['Definitif', 'Plt/Plh', 'Kosong'], datasets: [{ data: [def, plt+plh, kosong], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }] },
+                options: { responsive: true, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Chart Kosong per OPD
+            let kosongList = getDaftarJabatanKosong();
+            let opdKosongMap = {};
+            kosongList.forEach(j => {
+                // PERBAIKAN: Menggunakan Nama Unit Kerja Langsung, bukan Induk Teratas.
+                // Hal ini membuat grafik OPD Kosong lebih spesifik (misal: "Bagian Hukum", bukan semuanya ditarik ke "Sekda")
+                let u = APP_DATA.struktur.find(s => s.UNIT_ID === j.UNIT_ID);
+                let opdName = u ? u.NAMA_UNIT : '-';
+                opdKosongMap[opdName] = (opdKosongMap[opdName]||0) + 1;
+            });
+
+            let opdLabels = Object.keys(opdKosongMap).sort((a,b) => opdKosongMap[b] - opdKosongMap[a]).slice(0, 10); // Top 10
+            let opdData = opdLabels.map(l => opdKosongMap[l]);
+
+            if(chartInstanceOpd) chartInstanceOpd.destroy();
+            chartInstanceOpd = new Chart(document.getElementById('chartOpdKosong'), {
+                type: 'bar', data: { labels: opdLabels, datasets: [{ data: opdData, backgroundColor: '#EF4444', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, plugins: { legend: {display:false} }, scales: { x: { ticks: { stepSize: 1 } } } }
+            });
+
+            // Warning Masa Jabatan (> 4.5 Tahun)
+            let warnHtml = ''; let now = new Date();
+            actPen.filter(p => p.STATUS_JABATAN === 'Definitif').forEach(p => {
+                let diffBulan = (now.getTime() - new Date(p.TMT_JABATAN).getTime()) / (1000 * 3600 * 24 * 30.44);
+                if(diffBulan >= 54) { // 4.5 tahun
+                    let pjb = APP_DATA.pejabat.find(x => String(x.NIP) === String(p.NIP));
+                    let jab = APP_DATA.jabatan.find(x => x.JABATAN_ID === p.JABATAN_ID);
+                    let sisa = 60 - diffBulan;
+                    let sisaText = sisa <= 0 ? '<span class="text-danger fw-bold">Lebih 5 Tahun</span>' : `${sisa.toFixed(1)} Bulan`;
+                    warnHtml += `<tr><td class="ps-4">${p.NIP}</td><td class="fw-bold">${pjb?pjb.NAMA:'-'}</td><td>${jab?jab.NAMA_JABATAN:'-'}</td><td>${formatTglDisplay(p.TMT_JABATAN)}</td><td>${(diffBulan/12).toFixed(1)} Tahun</td><td>${sisaText}</td></tr>`;
+                }
+            });
+            $("#tableDashWarning tbody").html(warnHtml || '<tr><td colspan="6" class="text-center text-success py-3">Tidak ada pegawai definitif yang mendekati evaluasi 5 tahun.</td></tr>');
+        }
+
+        // =======================================================
+        // REKAP JABATAN & PENSIUN
+        // =======================================================
+        function renderExecutive() {
+            let actPen = APP_DATA.penempatan.filter(p => p.AKTIF === 'Ya');
+            let filterEs = $("#filter-eselon-kosong").val();
+            let allKosong = getDaftarJabatanKosong(filterEs); 
+            
+            // Rekap Kosong dgn Persentase
+            let esKosMap = {};
+            let esTotalMap = {}; // Untuk Persentase
+            APP_DATA.jabatan.forEach(j => {
+                let es = (j.ESELON && j.ESELON !== '-') ? j.ESELON : 'Non Eselon';
+                esTotalMap[es] = (esTotalMap[es] || 0) + 1;
+            });
+            allKosong.forEach(j => {
+                let es = (j.ESELON && j.ESELON !== '-') ? j.ESELON : 'Non Eselon';
+                esKosMap[es] = (esKosMap[es] || 0) + 1;
+            });
+            
+            let eselonOrder = ['I.A', 'I.B', 'II.A', 'II.B', 'III.A', 'III.B', 'IV.A', 'IV.B', 'V.A', 'V.B', 'Non Eselon'];
+            let sortedEs = Object.keys(esKosMap).sort((a,b) => {
+                let ia = eselonOrder.indexOf(a); let ib = eselonOrder.indexOf(b);
+                if(ia===-1) ia=99; if(ib===-1) ib=99; return ia-ib;
+            });
+
+            let kosHtml = '';
+            sortedEs.forEach(es => { 
+                let total = esTotalMap[es] || 1;
+                let pct = ((esKosMap[es] / total) * 100).toFixed(1);
+                kosHtml += `<tr><td class="ps-4"><span class="badge bg-secondary">${es}</span></td><td class="text-end pe-4 fw-bold text-danger">${esKosMap[es]} Jabatan <span class="text-muted fw-normal ms-1 small">(${pct}%)</span></td></tr>`; 
+            });
+            $("#tableExecKosong tbody").html(kosHtml || '<tr><td colspan="2" class="text-center text-success py-3">Tidak ada data kosong sesuai filter.</td></tr>');
+
+            // Rangkap Jabatan
+            let nipCounts = {}; actPen.forEach(p => { nipCounts[p.NIP] = (nipCounts[p.NIP] || 0) + 1; });
+            let rangkapHtml = '';
+            for(let nip in nipCounts) {
+                if(nipCounts[nip] > 1) {
+                    let pjb = APP_DATA.pejabat.find(p => String(p.NIP) === String(nip));
+                    let jList = actPen.filter(p => String(p.NIP) === String(nip)).map(p => {
+                        let jname = APP_DATA.jabatan.find(j => j.JABATAN_ID === p.JABATAN_ID)?.NAMA_JABATAN || 'Unknown';
+                        let c = p.STATUS_JABATAN === 'Definitif' ? 'success' : 'warning text-dark';
+                        return `<li class="mb-1">${jname} <span class="badge bg-soft-${c} ms-1">${p.STATUS_JABATAN}</span></li>`;
+                    }).join('');
+                    rangkapHtml += `<tr><td class="ps-4"><span class="fw-bold text-dark">${pjb?pjb.NAMA:'-'}</span><br><small class="text-muted">${nip}</small></td><td><ul class="mb-0 ps-3">${jList}</ul></td></tr>`;
+                }
+            }
+            $("#tableExecRangkap tbody").html(rangkapHtml || '<tr><td colspan="2" class="text-center text-muted py-3">Tidak ada ASN rangkap jabatan.</td></tr>');
+
+            renderTablePensiun(actPen);
+        }
+
+        function renderTablePensiun(actPen) {
+            let activePegawai = {};
+            actPen.forEach(p => {
+                let nip = String(p.NIP);
+                if (!activePegawai[nip]) activePegawai[nip] = [];
+                activePegawai[nip].push(p);
+            });
+
+            let pensiunList = []; let now = new Date();
+
+            for (let nip in activePegawai) {
+                if (nip.length < 18) continue; 
+                let pej = APP_DATA.pejabat.find(pj => String(pj.NIP) === nip);
+                let isPimpinan = false; let highestEselon = 'Non Eselon';
+                let jabName = '-';
+                
+                activePegawai[nip].forEach(p => {
+                    let jab = APP_DATA.jabatan.find(j => j.JABATAN_ID === p.JABATAN_ID);
+                    if (jab && jab.ESELON) {
+                        if (jab.ESELON.includes('I.') || jab.ESELON.includes('II.')) isPimpinan = true; // JPT = 60 Thn
+                        if (jab.ESELON !== '-') { highestEselon = jab.ESELON; jabName = jab.NAMA_JABATAN; }
+                    }
+                });
+
+                let usiaPensiun = isPimpinan ? 60 : 58;
+                let yyyy = parseInt(nip.substr(0, 4)); let mm = parseInt(nip.substr(4, 2));
+                let pYear = yyyy + usiaPensiun; let pMonth = mm + 1;
+                if (pMonth > 12) { pMonth = 1; pYear++; }
+                
+                let tmtPensiun = new Date(pYear, pMonth - 1, 1);
+                let diffBulan = (tmtPensiun.getTime() - now.getTime()) / (1000 * 3600 * 24 * 30.44);
+
+                if (diffBulan <= 12) { // Tampilkan 12 bulan mendekati
+                    pensiunList.push({ NIP: nip, NAMA: pej?pej.NAMA:nip, JABATAN: jabName, TMT_DATE: tmtPensiun, TMT_STR: `01-${String(pMonth).padStart(2, '0')}-${pYear}`, IS_RETIRED: now >= tmtPensiun });
+                }
+            }
+            
+            pensiunList.sort((a,b) => a.TMT_DATE - b.TMT_DATE);
+            let pHtml = '';
+            pensiunList.forEach(p => {
+                let badge = p.IS_RETIRED ? `<span class="badge bg-danger">Masuk BUP</span>` : `<span class="badge bg-soft-warning">Mendekati</span>`;
+                let btn = p.IS_RETIRED ? `<button class="btn btn-sm btn-danger py-0 px-2 fw-bold" onclick="eksekusiPensiun('${p.NIP}', '${p.NAMA.replace(/'/g, "\\'")}')">Pensiunkan Sistem</button>` : `-`;
+                pHtml += `<tr><td class="ps-4">${p.NIP}</td><td class="fw-bold">${p.NAMA}</td><td>${p.JABATAN}</td><td class="text-primary fw-bold">${p.TMT_STR}</td><td>${badge}</td><td>${btn}</td></tr>`;
+            });
+            $("#tableExecPensiun tbody").html(pHtml || '<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada pegawai yang mendekati BUP dalam 1 tahun ke depan.</td></tr>');
+        }
+
+        async function eksekusiPensiun(nip, nama) {
+            let res = await Swal.fire({ title: 'Pensiunkan Pegawai?', html: `Memberhentikan <b>${nama}</b> dari seluruh jabatan aktif (BUP). Lanjutkan?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc3545' });
+            if(res.isConfirmed) {
+                await executeProcess("Eksekusi Pensiun", async () => {
+                    await apiCall('pensiunkanPegawai', { NIP: nip, NAMA: nama });
+                    await loadDataFromBackend(true); 
+                });
+            }
+        }
+
+        function showPreviewKosong() {
+            let filterEs = $("#filter-eselon-kosong").val();
+            let kosongList = getDaftarJabatanKosong(filterEs);
+            $("#label-filter-kosong").text(filterEs ? `(${filterEs})` : '');
+
+            if ($.fn.DataTable.isDataTable('#dt-preview-kosong')) $('#dt-preview-kosong').DataTable().destroy();
+            let html = '';
+            kosongList.forEach(j => {
+                let unit = APP_DATA.struktur.find(u => u.UNIT_ID === j.UNIT_ID)?.NAMA_UNIT || '-';
+                html += `<tr><td>${j.JABATAN_ID}</td><td class="fw-bold text-dark">${j.NAMA_JABATAN}</td><td><span class="badge bg-secondary">${j.ESELON}</span></td><td>${unit}</td></tr>`;
+            });
+            $("#dt-preview-kosong tbody").html(html);
+            $('#dt-preview-kosong').DataTable({ pageLength: 10 });
+            new bootstrap.Modal(document.getElementById('modalPreviewKosong')).show();
+        }
+
+        function downloadKosong() {
+            let filterEs = $("#filter-eselon-kosong").val();
+            let kosongList = getDaftarJabatanKosong(filterEs);
+            if(kosongList.length === 0) return Swal.fire('Info', 'Tidak ada data kosong.', 'info');
+            
+            let excelData = kosongList.map(j => {
+                let unit = APP_DATA.struktur.find(u => u.UNIT_ID === j.UNIT_ID)?.NAMA_UNIT || '-';
+                return { "ID Jabatan": j.JABATAN_ID, "Nama Jabatan": j.NAMA_JABATAN, "Eselon": j.ESELON, "Unit Organisasi": unit };
+            });
+            let ws = XLSX.utils.json_to_sheet(excelData); let wb = XLSX.utils.book_new(); 
+            XLSX.utils.book_append_sheet(wb, ws, "Jabatan Kosong");
+            XLSX.writeFile(wb, `Jabatan_Kosong_${filterEs||'Semua'}.xlsx`);
+        }
+
+        // =======================================================
+        // MASA JABATAN (WITH ADVANCED FILTER)
+        // =======================================================
+        function renderMasaJabatan() {
+            if (tableMasaJabatan) { tableMasaJabatan.destroy(); }
+            let html = ''; let now = new Date();
+            APP_DATA.penempatan.filter(p => p.AKTIF === 'Ya').forEach(p => {
+                let pej = APP_DATA.pejabat.find(pj => String(pj.NIP) === String(p.NIP));
+                let jab = APP_DATA.jabatan.find(j => j.JABATAN_ID === p.JABATAN_ID);
+                
+                // PERBAIKAN: Tampilkan Unit Kerja Langsung, jangan menelusuri ke Induk/Root.
+                let opdName = '-';
+                if(jab) {
+                    let u = APP_DATA.struktur.find(s => s.UNIT_ID === jab.UNIT_ID);
+                    if(u) {
+                        opdName = u.NAMA_UNIT; // Menggunakan nama unit langsung (contoh: "Bagian Hukum")
+                    }
+                }
+
+                let diffYears = ((now - new Date(p.TMT_JABATAN)) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1);
+                let badgeClass = diffYears >= 5 ? 'bg-danger' : (diffYears >= 2 ? 'bg-warning text-dark' : 'bg-success');
+                html += `<tr>
+                    <td>${p.NIP}</td><td class="fw-bold text-dark">${pej ? pej.NAMA : '-'}</td><td>${jab ? jab.NAMA_JABATAN : '-'}</td>
+                    <td>${opdName}</td><td>${jab ? jab.ESELON : '-'}</td>
+                    <td>${p.STATUS_JABATAN}</td><td>${formatTglDisplay(p.TMT_JABATAN)}</td>
+                    <td><span class="badge ${badgeClass}">${diffYears} Tahun</span></td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editMasaJabatan('${p.PENEMPATAN_ID}')"><i class="bi bi-pencil"></i></button></td>
+                </tr>`;
+            });
+            $("#dt-masa tbody").html(html);
+            
+            tableMasaJabatan = $('#dt-masa').DataTable({ 
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/id.json' }
+            });
+
+            // Bind Dropdown Filters
+            $('#filter-opd-masa').on('change', function() { tableMasaJabatan.column(3).search(this.value).draw(); });
+            $('#filter-eselon-masa').on('change', function() { tableMasaJabatan.column(4).search(this.value ? `^${this.value}$` : '', true, false).draw(); });
+            $('#filter-status-masa').on('change', function() { tableMasaJabatan.column(5).search(this.value ? `^${this.value}$` : '', true, false).draw(); });
+        }
+
+        function editMasaJabatan(penId) {
+            let p = APP_DATA.penempatan.find(x => x.PENEMPATAN_ID === penId);
+            if(!p) return;
+            Swal.fire({
+                title: 'Edit TMT & Status',
+                html: `
+                    <div class="text-start">
+                        <label class="form-label small fw-bold mt-2">TMT Jabatan</label>
+                        <input type="date" id="swal-tmt" class="form-control mb-3" value="${formatTglInput(p.TMT_JABATAN)}">
+                        <label class="form-label small fw-bold">Status Jabatan</label>
+                        <select id="swal-status" class="form-select">
+                            <option value="Definitif" ${p.STATUS_JABATAN=='Definitif'?'selected':''}>Definitif</option>
+                            <option value="Plt" ${p.STATUS_JABATAN=='Plt'?'selected':''}>Plt</option>
+                            <option value="Plh" ${p.STATUS_JABATAN=='Plh'?'selected':''}>Plh</option>
+                        </select>
+                    </div>
+                `,
+                showCancelButton: true, confirmButtonText: 'Simpan ke Database',
+                preConfirm: () => { return { PENEMPATAN_ID: penId, TMT_JABATAN: document.getElementById('swal-tmt').value, STATUS_JABATAN: document.getElementById('swal-status').value } }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    executeProcess("Update Penempatan", async () => {
+                        await apiCall('updateMasaJabatan', result.value);
+                        await loadDataFromBackend(true); 
+                    });
+                }
+            });
+        }
+
+        // =======================================================
+        // STRUKTUR VISUAL
+        // =======================================================
+        function renderStruktur() {
+            let finalHtml = '';
+            if(APP_DATA.struktur && APP_DATA.struktur.length > 0) {
+                let unitMap = {}; APP_DATA.struktur.forEach(u => unitMap[u.UNIT_ID] = { ...u, children: [] });
+                let roots = []; APP_DATA.struktur.forEach(u => { if (u.PARENT_ID && unitMap[u.PARENT_ID]) unitMap[u.PARENT_ID].children.push(unitMap[u.UNIT_ID]); else roots.push(unitMap[u.UNIT_ID]); });
+                
+                function buildTreeHTML(unit, level) {
+                    let html = ''; let unitJabs = APP_DATA.jabatan.filter(j => j.UNIT_ID === unit.UNIT_ID);
+                    let targetId = `collapse-${unit.UNIT_ID}`;
+                    let marginClass = level > 0 ? `ms-4 mt-2 ps-4 border-start border-2 border-primary border-opacity-25 tree-child` : ``;
+                    
+                    html += `<div class="${marginClass} tree-node">
+                                <div class="d-flex align-items-center mb-2" data-bs-toggle="collapse" data-bs-target="#${targetId}" aria-expanded="false" style="cursor: pointer;">
+                                    <i class="bi bi-chevron-right me-2 text-muted toggle-icon"></i>
+                                    <h6 class="fw-bold text-gov mb-0 ${level === 0 ? 'fs-5 pb-1 border-bottom w-100' : ''} tree-title"><i class="bi ${level === 0 ? 'bi-building text-primary' : 'bi-diagram-2 text-secondary'} me-2"></i>${unit.NAMA_UNIT}</h6>
+                                </div>
+                                <div class="collapse tree-collapse" id="${targetId}"><div class="pt-2 pb-3">`;
+                    if(unitJabs.length > 0) {
+                        html += `<div class="row">`;
+                        unitJabs.forEach(j => {
+                            let act = APP_DATA.penempatan.filter(p => p.JABATAN_ID === j.JABATAN_ID && p.AKTIF === 'Ya');
+                            let pText = act.length > 0 ? act.map(p => {
+                                let nama = APP_DATA.pejabat.find(pj=>String(pj.NIP) === String(p.NIP))?.NAMA || p.NIP;
+                                let col = p.STATUS_JABATAN === 'Definitif' ? 'text-success' : 'text-warning';
+                                return `<div class="small fw-bold mt-1"><i class="bi bi-person-fill"></i> ${nama} <span class="${col}">(${p.STATUS_JABATAN})</span></div>`;
+                            }).join('') : '<span class="text-danger fst-italic small">Kosong</span>';
+                            html += `<div class="col-md-4 mb-3"><div class="border rounded p-3 bg-white shadow-sm h-100"><div class="small text-muted fw-semibold border-bottom pb-1 mb-2 tree-jab-title">${j.NAMA_JABATAN} <span class="badge bg-light text-dark float-end border">${j.ESELON}</span></div>${pText}</div></div>`;
+                        });
+                        html += `</div>`;
+                    }
+                    if(unit.children && unit.children.length > 0) unit.children.forEach(child => { html += buildTreeHTML(child, level + 1); });
+                    html += `</div></div></div>`;
+                    return html;
+                }
+                roots.forEach(root => { finalHtml += `<div class="card tree-unit shadow-sm mb-4"><div class="card-body p-4">${buildTreeHTML(root, 0)}</div></div>`; });
+            }
+            $("#tree-container").html(finalHtml);
+        }
+
+        function searchTree() {
+            let q = $("#search-tree").val().toLowerCase();
+            if(!q) {
+                $(".tree-node, .tree-unit").show();
+                $(".tree-collapse").collapse('hide');
+                return;
+            }
+            // Logic kasar jQuery untuk highlight/expand pencarian
+            $(".tree-unit").hide(); 
+            $(".tree-node").hide();
+            $(".tree-title, .tree-jab-title").each(function() {
+                if($(this).text().toLowerCase().includes(q)) {
+                    $(this).parents('.tree-unit').show(); // Show root card
+                    $(this).parents('.tree-node').show(); // Show current node
+                    $(this).parents('.tree-collapse').collapse('show'); // Expand path
+                }
+            });
+        }
+
+        // =======================================================
+        // MENU PLT (PENUGASAN) - KETAT VALIDASI
+        // =======================================================
+        async function executePlt() {
+            let nip = $("#select-pejabat-plt").val();
+            let jIdBaru = $("#select-jabatan-plt").val();
+            let status = $("#select-status-plt").val();
+            if(!nip || !jIdBaru) return Swal.fire('Oops', 'Pilih ASN dan Jabatan Target terlebih dahulu.', 'warning');
+            
+            let pej = APP_DATA.pejabat.find(p => String(p.NIP) === nip);
+            let jabBaru = APP_DATA.jabatan.find(j => j.JABATAN_ID === jIdBaru);
+            
+            // VALIDASI 1: ASN Pensiun?
+            let isPimpinan = jabBaru.ESELON.includes('I.') || jabBaru.ESELON.includes('II.');
+            let usiaPensiun = isPimpinan ? 60 : 58;
+            let yyyy = parseInt(nip.substr(0, 4)); let mm = parseInt(nip.substr(4, 2));
+            let tmtPensiun = new Date(yyyy + usiaPensiun, mm, 1);
+            if(new Date() >= tmtPensiun) return Swal.fire('Ditolak', `ASN ini sudah melewati Batas Usia Pensiun (TMT: ${tmtPensiun.toLocaleDateString()}).`, 'error');
+
+            // VALIDASI 2: Diri sendiri?
+            let defAktif = APP_DATA.penempatan.find(p => p.NIP === nip && p.STATUS_JABATAN === 'Definitif' && p.AKTIF === 'Ya');
+            if(defAktif && defAktif.JABATAN_ID === jIdBaru) return Swal.fire('Ditolak', 'ASN sudah menduduki jabatan target sebagai Definitif.', 'error');
+
+            // VALIDASI 3: Sudah Plt di tempat lain?
+            let pltLain = APP_DATA.penempatan.find(p => p.NIP === nip && (p.STATUS_JABATAN === 'Plt' || p.STATUS_JABATAN === 'Plh') && p.AKTIF === 'Ya');
+            if(pltLain) return Swal.fire('Ditolak', 'ASN ini sudah memiliki tugas rangkap aktif di jabatan lain.', 'error');
+
+            // VALIDASI 4: Jabatan Target sudah ada Plt?
+            let targetTerisi = APP_DATA.penempatan.find(p => p.JABATAN_ID === jIdBaru && p.AKTIF === 'Ya');
+            if(targetTerisi && (targetTerisi.STATUS_JABATAN === 'Plt' || targetTerisi.STATUS_JABATAN === 'Plh')) return Swal.fire('Ditolak', 'Jabatan target sudah memiliki Plt/Plh aktif saat ini.', 'error');
+
+            let res = await Swal.fire({ title: 'Konfirmasi Penugasan', html: `Tugaskan <b>${pej.NAMA}</b><br>sebagai <b>${status} ${jabBaru.NAMA_JABATAN}</b>?`, icon: 'question', showCancelButton: true });
+            if(res.isConfirmed) {
+                await executeProcess("Penugasan " + status, async () => {
+                    await apiCall('savePlt', { NIP: nip, NAMA: pej.NAMA, JABATAN_ID_BARU: jIdBaru, STATUS: status });
+                    $("#select-pejabat-plt, #select-jabatan-plt").val(null).trigger('change');
+                    await loadDataFromBackend(true); 
+                });
+            }
+        }
+
+        // =======================================================
+        // MASTER JABATAN & PEJABAT CRUD (MANUAL)
+        // =======================================================
+        function renderJabatan() {
+            if ($.fn.DataTable.isDataTable('#dt-jabatan')) $('#dt-jabatan').DataTable().destroy();
+            let html = '';
+            APP_DATA.jabatan.forEach(j => {
+                let unit = APP_DATA.struktur.find(u => u.UNIT_ID === j.UNIT_ID)?.NAMA_UNIT || '-';
+                let isFilled = APP_DATA.penempatan.some(p => p.JABATAN_ID === j.JABATAN_ID && p.AKTIF === 'Ya');
+                html += `<tr><td>${j.JABATAN_ID}</td><td class="fw-bold text-dark">${j.NAMA_JABATAN}</td><td>${j.ESELON}</td><td>${unit}</td><td>${isFilled ? '<span class="badge bg-soft-success">Terisi</span>' : '<span class="badge bg-soft-danger">Kosong</span>'}</td>
+                <td class="text-center"><button class="btn btn-sm btn-outline-secondary" onclick="alert('Ubah via Google Spreadsheet Master')"><i class="bi bi-pencil"></i></button></td></tr>`;
+            });
+            $("#dt-jabatan tbody").html(html);
+            $('#dt-jabatan').DataTable();
+        }
+        function showModalJabatan() { alert('Penambahan struktur jabatan baru (Unit Organisasi) dilakukan via Edit Excel dan Import Awal agar tidak merusak relasi Tree View di Spreadsheet.'); }
+
+        function renderPejabat() {
+            if ($.fn.DataTable.isDataTable('#dt-pejabat')) $('#dt-pejabat').DataTable().destroy();
+            let html = '';
+            APP_DATA.pejabat.forEach(p => { 
+                html += `<tr><td class="fw-bold text-dark">${p.NIP}</td><td>${p.NAMA}</td><td>${p.PANGKAT}</td><td>${p.GOLONGAN}</td>
+                <td class="text-center"><button class="btn btn-sm btn-outline-primary" onclick="showModalPejabat('${p.NIP}')"><i class="bi bi-pencil"></i> Edit</button></td></tr>`; 
+            });
+            $("#dt-pejabat tbody").html(html);
+            $('#dt-pejabat').DataTable();
+        }
+
+        function showModalPejabat(nip = null) {
+            let isEdit = nip !== null;
+            let p = isEdit ? APP_DATA.pejabat.find(x => String(x.NIP) === String(nip)) : {NIP: '', NAMA: '', PANGKAT: '', GOLONGAN: ''};
+            
+            Swal.fire({
+                title: isEdit ? 'Edit Data ASN' : 'Tambah ASN Baru',
+                html: `
+                    <div class="text-start">
+                        <label class="form-label small fw-bold mt-2">NIP</label>
+                        <input id="swal-nip" class="form-control mb-2" value="${p.NIP}" ${isEdit ? 'readonly class="form-control mb-2 bg-light"' : ''}>
+                        <label class="form-label small fw-bold">Nama Lengkap</label>
+                        <input id="swal-nama" class="form-control mb-2" value="${p.NAMA}">
+                        <label class="form-label small fw-bold">Pangkat</label>
+                        <input id="swal-pangkat" class="form-control mb-2" value="${p.PANGKAT}">
+                        <label class="form-label small fw-bold">Golongan</label>
+                        <input id="swal-gol" class="form-control mb-2" value="${p.GOLONGAN}">
+                    </div>
+                `,
+                showCancelButton: true, confirmButtonText: 'Simpan ke Database',
+                preConfirm: () => { return { NIP: document.getElementById('swal-nip').value, NAMA: document.getElementById('swal-nama').value, PANGKAT: document.getElementById('swal-pangkat').value, GOLONGAN: document.getElementById('swal-gol').value } }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    executeProcess("Simpan Data Pejabat", async () => {
+                        await apiCall('savePejabat', result.value);
+                        await loadDataFromBackend(true); 
+                    });
+                }
+            });
+        }
+
+        // =======================================================
+        // MUTASI EXCEL & MANUAL (PERORANGAN)
+        // =======================================================
+        function downloadTemplateMutasi() {
+            let wsTemplate = XLSX.utils.json_to_sheet([{ "NIP": "19800101", "Nama": "Ahmad", "ID_JABATAN_BARU": "J001" }]);
+            let wsJabatan = XLSX.utils.json_to_sheet(APP_DATA.jabatan.map(j => ({ "ID_JABATAN": j.JABATAN_ID, "NAMA_JABATAN": j.NAMA_JABATAN, "UNIT_ORGANISASI": APP_DATA.struktur.find(u => u.UNIT_ID === j.UNIT_ID)?.NAMA_UNIT || '-' })));
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsTemplate, "Format_Upload"); XLSX.utils.book_append_sheet(wb, wsJabatan, "Referensi_ID_Jabatan");
+            XLSX.writeFile(wb, "Template_Mutasi_SIMONJAB.xlsx");
+        }
+
+        async function executeMutasiManual() {
+            let nip = $("#select-pejabat-mutasi").val();
+            let jIdBaru = $("#select-jabatan-mutasi").val();
+            if(!nip || !jIdBaru) return Swal.fire('Oops', 'Pilih Pegawai dan Jabatan Tujuan.', 'warning');
+            
+            let pej = APP_DATA.pejabat.find(p => String(p.NIP) === nip);
+            let jabBaru = APP_DATA.jabatan.find(j => j.JABATAN_ID === jIdBaru);
+            
+            let res = await Swal.fire({ title: 'Mutasi Perorangan', html: `Rotasi <b>${pej.NAMA}</b><br>ke <b>${jabBaru.NAMA_JABATAN}</b>?`, icon: 'question', showCancelButton: true });
+            if(res.isConfirmed) {
+                await executeProcess("Mutasi Satuan", async () => {
+                    await apiCall('saveMutasi', [{ NIP: nip, NAMA: pej.NAMA, JABATAN_ID_BARU: jIdBaru }]);
+                    $("#select-pejabat-mutasi, #select-jabatan-mutasi").val(null).trigger('change');
+                    await loadDataFromBackend(true); 
+                });
+            }
+        }
+
+        function handlePreviewMutasi() {
+            let file = document.getElementById('fileMutasi').files[0];
+            if(!file) return Swal.fire('Oops', 'Pilih file Excel!', 'warning');
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let json = XLSX.utils.sheet_to_json(XLSX.read(data, {type: 'array'}).Sheets[XLSX.read(data, {type: 'array'}).SheetNames[0]]);
+                preparedMutasiData = []; let html = ''; let allValid = true;
+
+                json.forEach(row => {
+                    let nip = String(row['NIP'] || '').trim();
+                    let jabBaruId = String(row['ID_JABATAN_BARU'] || '').trim();
+                    let pej = APP_DATA.pejabat.find(p => String(p.NIP) === nip);
+                    let jabBaru = APP_DATA.jabatan.find(j => j.JABATAN_ID === jabBaruId);
+                    
+                    let statusValid = [];
+                    if(!pej) statusValid.push('Pegawai Baru (Akan Ditambah)'); 
+                    if(!jabBaru) statusValid.push('ID Jabatan tidak valid');
+                    
+                    let actPens = APP_DATA.penempatan.filter(p => String(p.NIP) === nip && p.AKTIF === 'Ya');
+                    let jabLamaNames = actPens.map(p => APP_DATA.jabatan.find(j=>j.JABATAN_ID === p.JABATAN_ID)?.NAMA_JABATAN).join(', ') || 'Non-Job';
+
+                    if(jabBaru) preparedMutasiData.push({ NIP: nip, NAMA: row['Nama'] || (pej?pej.NAMA:'-'), JABATAN_ID_BARU: jabBaru.JABATAN_ID });
+                    else allValid = false;
+
+                    let badge = statusValid.length === 0 ? '<span class="badge bg-success">Siap</span>' : `<span class="badge bg-warning text-dark">${statusValid.join(', ')}</span>`;
+                    html += `<tr><td>${nip}</td><td class="fw-bold">${pej?pej.NAMA:row['Nama']}</td><td class="text-muted">${jabLamaNames}</td><td class="text-primary fw-bold">${jabBaru?jabBaru.NAMA_JABATAN:'Error ID'}</td><td>${badge}</td></tr>`;
+                });
+
+                $("#tablePreviewMutasi tbody").html(html);
+                $("#previewMutasiContainer").removeClass('d-none');
+                $("#btnProsesMutasi").prop('disabled', !allValid);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function executeMutasi() {
+            if(preparedMutasiData.length === 0) return;
+            let res = await Swal.fire({ title: 'Proses Mutasi Massal?', text: `Lanjutkan rotasi ${preparedMutasiData.length} data?`, icon: 'question', showCancelButton: true });
+            if(res.isConfirmed) {
+                await executeProcess("Mutasi Masal", async () => {
+                    await apiCall('saveMutasi', preparedMutasiData);
+                    $("#fileMutasi").val(''); $("#previewMutasiContainer").addClass('d-none');
+                    await loadDataFromBackend(true); 
+                });
+            }
+        }
+
+        // =======================================================
+        // EXPORT PDF LIBRARIES WRAPPER
+        // =======================================================
+        function exportPDF(tableId, filename, isTree = false) {
+            if(isTree) {
+                window.print(); // Cara terbaik print visual hirarki adalah fungsi browser native to PDF
+                return;
+            }
+            // AutoTable Extract
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4'); // Landscape
+            doc.text(`Laporan: ${filename.replace(/_/g, ' ')}`, 40, 40);
+            
+            // Konversi HTML Table ke Array untuk jspdf
+            doc.autoTable({
+                html: '#' + tableId,
+                startY: 60,
+                styles: { fontSize: 8, font: 'helvetica' },
+                headStyles: { fillColor: [15, 23, 42] } // var(--gov-blue)
+            });
+            doc.save(filename + '.pdf');
+        }
+
+        // =======================================================
+        // GLOBAL SEARCH MODAL (Triggered from Topbar)
+        // =======================================================
+        function handleGlobalSearch(e) {
+            if(e.key === 'Enter') {
+                let q = document.getElementById('global-search').value.toLowerCase().trim();
+                if(q.length < 3) return Swal.fire('Info', 'Ketik minimal 3 huruf untuk mencari NIP atau Nama ASN.', 'info');
+                
+                let p = APP_DATA.pejabat.find(x => String(x.NIP).includes(q) || x.NAMA.toLowerCase().includes(q));
+                if(!p) return Swal.fire('Tidak Ditemukan', `ASN dengan kata kunci "${q}" tidak ada dalam sistem.`, 'error');
+
+                // Cari Jabatan Aktif
+                let actPens = APP_DATA.penempatan.filter(x => String(x.NIP) === String(p.NIP) && x.AKTIF === 'Ya');
+                let jText = actPens.length > 0 ? actPens.map(pen => {
+                    let j = APP_DATA.jabatan.find(x => x.JABATAN_ID === pen.JABATAN_ID);
+                    // PERBAIKAN: Tambahkan juga nama Unit kerjanya agar informasinya utuh
+                    let u = j ? APP_DATA.struktur.find(s => s.UNIT_ID === j.UNIT_ID) : null;
+                    let opdStr = u ? `<br><small class="text-dark"><i class="bi bi-building me-1"></i>${u.NAMA_UNIT}</small>` : '';
+                    
+                    return `<div class="mb-2 p-2 bg-light border rounded"><b>${j?j.NAMA_JABATAN:'-'}</b> <span class="badge bg-primary float-end">${pen.STATUS_JABATAN}</span>${opdStr}<br><small class="text-muted mt-1 d-block">TMT: ${formatTglDisplay(pen.TMT_JABATAN)}</small></div>`;
+                }).join('') : '<div class="alert alert-danger py-2">Non-Job (Tidak Memiliki Jabatan Aktif)</div>';
+
+                // Cari Riwayat
+                let riw = APP_DATA.riwayat.filter(x => String(x.NIP) === String(p.NIP)).map(r => `<li><small>${formatTglDisplay(r.TANGGAL)}: Mutasi ke ${r.JABATAN_BARU} (${r.KETERANGAN})</small></li>`).join('');
+
+                Swal.fire({
+                    title: 'Profil ASN',
+                    html: `
+                        <div class="text-start mt-3">
+                            <h5 class="fw-bold text-gov">${p.NAMA}</h5>
+                            <p class="text-muted mb-3">${p.NIP} | ${p.PANGKAT} (${p.GOLONGAN})</p>
+                            <h6 class="fw-bold border-bottom pb-1">Jabatan Saat Ini</h6>
+                            ${jText}
+                            <h6 class="fw-bold border-bottom pb-1 mt-3">Riwayat Mutasi Sistem</h6>
+                            <ul class="ps-3 mb-0">${riw || '<li class="small text-muted">Belum ada riwayat mutasi dalam sistem SIMONJAB.</li>'}</ul>
+                        </div>
+                    `,
+                    width: '600px', showConfirmButton: false, showCloseButton: true
+                });
+            }
+        }
+    </script>
+</body>
+</html>
